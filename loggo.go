@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const authLog = "/root/custom/loggo/auth.log.test" //logfile auth.log
+const authLog = "/var/log/auth.log.test" //logfile auth.log
 //const apacheLog = "var/log/apache2/access.log"
 //const apacheLog = "var/log/syslog"
 
