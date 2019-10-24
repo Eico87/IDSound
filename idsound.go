@@ -274,23 +274,16 @@ func playAlert(a attack) {
 
 //TODO
 
-//read the whole file
 //read just the last line
-//MAKE IT RUN
-
 // default values and constuctors
 // import attacks parameters from json
-
 // check if the file has been modified and then do the rest
-
 // print evidence on terminal
 // save evidence in /var/logs/idsound.log
 // reset values
-
 // find a better control fon nmap
 // wordlist spotter
 // set clock:how many logs are there in a second? should I use millliseconds?
 // cpu monitor
 // network traffic monitor
 // cool interface
-// could I use bidimensional array to make it more efficient??
