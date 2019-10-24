@@ -21,7 +21,7 @@ type monitoredFile struct {
 type attack struct {
 	name string
 	//refernceLog string
-	refernceLog monitoredFile
+	refernceLog string
 	control     string
 	message     string
 	//default
@@ -50,10 +50,11 @@ func (f monitoredFile) resetMonitor() {
 func (a attack) gName() string { return a.name }
 
 //func (a attack) gRefernceLog() string { return a.refernceLog }
-func (a attack) gControl() string  { return a.control }
-func (a attack) gMessage() string  { return a.message }
-func (a attack) gCheck() bool      { return a.check }
-func (a attack) gEvidence() string { return a.evidence }
+func (a attack) gControl() string      { return a.control }
+func (a attack) gMessage() string      { return a.message }
+func (a attack) gCheck() bool          { return a.check }
+func (a attack) gEvidence() string     { return a.evidence }
+func (a attack) gReferenceLog() string { return a.refernceLog }
 
 //SET attack
 func (a attack) sCheck(b bool)      { a.check = b }
@@ -179,7 +180,7 @@ func main() {
 
 				//this could be better if I could pass the file path inside the attack struct
 
-				switch allMonitoredFiles[i].gName {
+				switch allMonitoredFiles[i].gName() {
 
 				case "auth.log":
 					p("searching attack evidence in  auth.log")
@@ -266,7 +267,7 @@ func printEvidence(a attack) {
 	p("Evidence:") //DEBUG
 	p(a.gEvidence())
 	p("in")
-	p(a.gRefernceLog())
+	p(a.gReferenceLog())
 	p("------------------------------------")
 }
 func detectAttack(a attack, f monitoredFile) bool {
@@ -316,4 +317,3 @@ func playAlert(a attack) {
 // cpu monitor
 // network traffic monitor
 // cool interface
-
