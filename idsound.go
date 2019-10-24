@@ -142,21 +142,24 @@ var p = fmt.Println
 func main() {
 	loopcounter := 0
 
+	p("STARTING LOOP") //DEBUG
+
+	test()
 	//save when was the last time that the file has been modified
 	for ii := 0; ii < len(allMonitoredFiles); ii++ {
 		t := checkLastModTime(allMonitoredFiles[ii])
 		allMonitoredFiles[ii].lastMod = t
 	}
-
+	p("ADDING TIME LAST MOD") //DEBUG
+	test()                    //DEBUG
 	//in infinite loop
 	for {
-
 		time.Sleep(700 * time.Millisecond) //wait
 		//for each logfile watched
 		for i := 0; i < len(allMonitoredFiles); i++ {
 			//check if it has been modified
 
-			//if watchLog(allMonitoredFiles[i]) { //REAL LINE
+			//if watchLog(allMonitoredFiles[i]) { //REAL LINE DEBUG
 			if true {
 				//read the last line
 				tailLog(allMonitoredFiles[i]) //NOT WORKING: IT JUST READ THE WHOLE FILE
@@ -190,9 +193,11 @@ func main() {
 				}
 			}
 		}
+		p("RUNNING TEST ON ATTACK")
+		test()
+
 		//for any attack
 		for j := 0; j < len(allAttacks); j++ {
-
 			//if it has been proved
 			if allAttacks[j].check { //NOW WORKING
 
@@ -205,13 +210,16 @@ func main() {
 				allAttacks[j].resetAttack()
 			}
 		}
-
 		loopcounter++
 		if loopcounter > 60 {
 			loopcounter = 0
 		}
-
-		p("Loop: ", loopcounter)
+		p("FINAL VALUES")                                                               //DEBUG
+		test()                                                                          //DEBUG
+		p("====================================")                                       //DEBUG
+		p("Loop: ", loopcounter)                                                        //DEBUG
+		p("====================================")                                       //DEBUG
+		p("**************************************RESTART*****************************") //DEBUG
 	}
 }
 
@@ -290,9 +298,42 @@ func playAlert(a attack) {
 	time.Sleep(4 * time.Second)
 }
 
+func testingAttackValues(a attack) {
+	p("-------------------------------------")
+	p("testing values in ", a.name)
+	p("-------------------------------------")
+	p("detected", a.check)
+	p("recursive", a.recursive)
+	p("evidence", a.evidence)
+}
+
+func testingMonitoredFilesValue(f monitoredFile) {
+	p("-------------------------------------")
+	p("testing values in ", f.name)
+	p("-------------------------------------")
+	p("hasBeenModified ", f.hasBeenModified)
+	p("last log", f.lastLog)
+	p("last mod", f.lastMod)
+}
+
+func test() {
+	p("-------------------------------------")
+	p("RUNNING TEST")
+	p("-------------------------------------")
+	for i := 0; i < len(allAttacks); i++ {
+		testingAttackValues(allAttacks[i])
+	}
+	for j := 0; j < len(allMonitoredFiles); j++ {
+		testingMonitoredFilesValue(allMonitoredFiles[j])
+	}
+}
+
 //TODO
 
 // read just the last line
+
+//THE LOOP CONTINUES BUT IT NEVER REACH ATTACKS TEST
+
 // print evidence on terminal and in log files
 // save evidence in /var/logs/idsound.log
 
