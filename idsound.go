@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ type monitoredFile struct {
 	//default
 	hasBeenModified bool
 	lastLog         string
+	lastMod         time.Time
 }
 
 type attack struct {
@@ -30,42 +32,17 @@ type attack struct {
 	recursive int
 }
 
-//GET monitoredFile
-func (f monitoredFile) gName() string          { return f.name }
-func (f monitoredFile) gPath() string          { return f.path }
-func (f monitoredFile) gHasBeenModified() bool { return f.hasBeenModified }
-func (f monitoredFile) gLastLog() string       { return f.lastLog }
-
-//SET monitoredFile
-func (f monitoredFile) sHasBeenModified(b bool) { f.hasBeenModified = b }
-func (f monitoredFile) sLastLog(s string)       { f.lastLog = s }
-
 //RESET
 func (f monitoredFile) resetMonitor() {
-	f.sHasBeenModified(false)
-	f.sLastLog("")
+	f.hasBeenModified = false
+	f.lastLog = ""
 }
-
-//GET attack
-func (a attack) gName() string { return a.name }
-
-//func (a attack) gRefernceLog() string { return a.refernceLog }
-func (a attack) gControl() string      { return a.control }
-func (a attack) gMessage() string      { return a.message }
-func (a attack) gCheck() bool          { return a.check }
-func (a attack) gEvidence() string     { return a.evidence }
-func (a attack) gReferenceLog() string { return a.refernceLog }
-
-//SET attack
-func (a attack) sCheck(b bool)      { a.check = b }
-func (a attack) sEvidence(s string) { a.evidence = s }
-func (a attack) sRecursive(n int)   { a.recursive = n }
 
 //RESET
 func (a attack) resetAttack() {
-	a.sCheck(false)
-	a.sEvidence("")
-	a.sRecursive(0)
+	a.check = false
+	a.evidence = ""
+	a.recursive = 0
 }
 
 var allMonitoredFiles = []monitoredFile{
@@ -164,23 +141,30 @@ var p = fmt.Println
 
 func main() {
 	loopcounter := 0
-	//for each second in infinite loop
+
+	//save when was the last time that the file has been modified
+	for ii := 0; ii < len(allMonitoredFiles); ii++ {
+		t := checkLastModTime(allMonitoredFiles[ii])
+		allMonitoredFiles[ii].lastMod = t
+	}
+
+	//in infinite loop
 	for {
-		time.Sleep(700 * time.Millisecond) //wait 1 sec
+
+		time.Sleep(700 * time.Millisecond) //wait
 		//for each logfile watched
 		for i := 0; i < len(allMonitoredFiles); i++ {
-
 			//check if it has been modified
-			if watchLog(allMonitoredFiles[i]) { //NOT WORKING: ALWAYS RETURN TRUE
 
+			//if watchLog(allMonitoredFiles[i]) { //REAL LINE
+			if true {
 				//read the last line
 				tailLog(allMonitoredFiles[i]) //NOT WORKING: IT JUST READ THE WHOLE FILE
 
 				//perform all the tests relative to the log in question
-
 				//this could be better if I could pass the file path inside the attack struct
-
-				switch allMonitoredFiles[i].gName() {
+				x := allMonitoredFiles[i].name
+				switch x {
 
 				case "auth.log":
 					p("searching attack evidence in  auth.log")
@@ -203,43 +187,54 @@ func main() {
 				case "syslog":
 					p("searching attack evidence in  syslog")
 					detectAttack(allAttacks[6], allMonitoredFiles[4])
-
-					//if an attack is detected
-					if allAttacks[i].gCheck() { //NOW WORKING
-						printEvidence(allAttacks[i]) //print evidence on log file and NOW WORKING it prints on the terminal
-						playAlert(allAttacks[i])     //play audio alert
-						//add bruteforce allarm here
-
-						//reset attack variables
-						allAttacks[i].resetAttack()
-					}
 				}
 			}
 		}
+		//for any attack
+		for j := 0; j < len(allAttacks); j++ {
+
+			//if it has been proved
+			if allAttacks[j].check { //NOW WORKING
+
+				printEvidence(allAttacks[j]) //print evidence on log file and NOW WORKING it prints on the terminal
+				playAlert(allAttacks[j])     //play audio alert
+
+				//add bruteforce alarm here
+
+				//reset attack variables
+				allAttacks[j].resetAttack()
+			}
+		}
+
 		loopcounter++
 		if loopcounter > 60 {
 			loopcounter = 0
 		}
+
 		p("Loop: ", loopcounter)
 	}
 }
 
-func watchLog(f monitoredFile) bool {
+func checkLastModTime(f monitoredFile) time.Time {
+	var t time.Time
 
-	p("Watching", f.gName()) //DEBUG
-	/*
-		var t time.Time
-		if fi, err2 := os.Stat(f.gPath()); err2 == nil {
-			t := fi.ModTime()
-		}
-
-		//----pass time
-		//add condition here
-	*/
-	if 1 > 0 {
-		f.sHasBeenModified(true)
-		p(string(f.gName()) + " Has been modified.") //DEBUG
+	if fi, err2 := os.Stat(f.path); err2 == nil {
+		t = fi.ModTime()
 	}
+	return t
+}
+
+//check if the actual value of modification time is changed
+func watchLog(f monitoredFile) bool {
+	p("Watching", f.name) //DEBUG
+	t := checkLastModTime(f)
+
+	if f.lastMod != t {
+		f.hasBeenModified = true
+		f.lastMod = t
+		p(string(f.name) + " Has been modified") //DEBUG
+	}
+
 	return f.hasBeenModified
 }
 
@@ -248,32 +243,32 @@ func checErrors(e error) {
 		panic(e)
 	}
 }
+
 func tailLog(f monitoredFile) string {
 
-	p("getting the last line from", f.gName()) //DEBUG
+	p("getting the last line from", f.name) //DEBUG
 
-	logFile, err := ioutil.ReadFile(f.gPath())
+	logFile, err := ioutil.ReadFile(f.path)
 	checErrors(err)
-
-	f.sLastLog(string(logFile))
+	f.lastLog = (string(logFile))
 
 	return string(logFile)
 }
 
 func printEvidence(a attack) {
 	p("------------------------------------")
-	p(a.gName())
+	p(a.name)
 	p("------------------------------------")
 	p("Evidence:") //DEBUG
-	p(a.gEvidence())
+	p(a.evidence)
 	p("in")
-	p(a.gReferenceLog())
+	p(a.refernceLog)
 	p("------------------------------------")
 }
 func detectAttack(a attack, f monitoredFile) bool {
-	vulnerable := false
+	vulnerable := true
 	/*
-		if strings.Contains(string(f.gLastLog), string(a.gControl)) {
+		if strings.Contains(string(f.LastLog), string(a.Control)) {
 			vulnerable = true
 			a.sCheck(true)
 			p(string(a.gName()) + " detected!") //DEBUG
@@ -297,11 +292,9 @@ func playAlert(a attack) {
 
 //TODO
 
-// FUNCTIONS
 // read just the last line
-// print evidence on terminal
+// print evidence on terminal and in log files
 // save evidence in /var/logs/idsound.log
-// check if the file has been modified and then do the rest
 
 //STRUCTURE
 // import attacks parameters from json
