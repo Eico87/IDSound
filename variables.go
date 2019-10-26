@@ -13,6 +13,17 @@ type monitoredFile struct {
 	lastMod         time.Time
 }
 
+//SET
+func (f *monitoredFile) sHasBeenModified(b bool) { f.hasBeenModified = b }
+func (f *monitoredFile) sLastLog(s string)       { f.lastLog = s }
+func (f *monitoredFile) sLastMod(t time.Time)    { f.lastMod = t }
+
+//RESET
+func (f *monitoredFile) resetMonitor() {
+	f.hasBeenModified = false
+	f.lastLog = ""
+}
+
 type attack struct {
 	name string
 	//refernceLog string
@@ -25,14 +36,13 @@ type attack struct {
 	recursive int
 }
 
-//RESET
-func (f monitoredFile) resetMonitor() {
-	f.hasBeenModified = false
-	f.lastLog = ""
-}
+//SET
+func (a *attack) sCheck(b bool)      { a.check = b }
+func (a *attack) sEvidence(s string) { a.evidence = s }
+func (a *attack) sRecursive(n int)   { a.recursive = n }
 
 //RESET
-func (a attack) resetAttack() {
+func (a *attack) resetAttack() {
 	a.check = false
 	a.evidence = ""
 	a.recursive = 0

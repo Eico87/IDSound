@@ -12,14 +12,14 @@ func main() {
 
 	//save when was the last time that the file has been modified
 	for ii := 0; ii < len(allMonitoredFiles); ii++ {
-		t := checkLastModTime(allMonitoredFiles[ii])
+		t := checkLastModTime(&allMonitoredFiles[ii])
 		allMonitoredFiles[ii].lastMod = t
 	}
 	//in infinite loop
 	for {
 
 		loopcounter++
-		
+
 		if loopcounter > 60 {
 			loopcounter = 0
 		}
@@ -30,16 +30,18 @@ func main() {
 			allMonitoredFiles[jj].resetMonitor()
 		}
 
-		time.Sleep(50 * time.Millisecond) //wait
+		time.Sleep(500 * time.Millisecond) //wait
 		//for each logfile watched
 		for i := 0; i < len(allMonitoredFiles); i++ {
 			//check if it has been modified
 
-			if watchLog(allMonitoredFiles[i]) { //REAL LINE
-				//if true { //DEBUG
+			if watchLog(&allMonitoredFiles[i]) { //REAL LINE
+				p(allMonitoredFiles[i].name)
+				p("has been modified = ", allMonitoredFiles[i].hasBeenModified) //DEBUG
+				p("last mod = ", allMonitoredFiles[i].lastMod)
 
-				tailLog(allMonitoredFiles[i]) //read the last line
-
+				tailLog(&allMonitoredFiles[i]) //read the last line
+				p("last log = ", allMonitoredFiles[i].lastLog)
 				//perform all the tests
 				//this could be better if I could pass the file path inside the attack struct
 				x := allMonitoredFiles[i].name
@@ -47,21 +49,21 @@ func main() {
 				switch x {
 
 				case "auth.log":
-					detectAttack(allAttacks[0], allMonitoredFiles[0])
-					detectAttack(allAttacks[1], allMonitoredFiles[0])
+					detectAttack(&allAttacks[0], &allMonitoredFiles[0])
+					detectAttack(&allAttacks[1], &allMonitoredFiles[0])
 
 				case "apache2 access.log":
-					detectAttack(allAttacks[2], allMonitoredFiles[1])
-					detectAttack(allAttacks[3], allMonitoredFiles[1])
+					detectAttack(&allAttacks[2], &allMonitoredFiles[1])
+					detectAttack(&allAttacks[3], &allMonitoredFiles[1])
 
 				case "apache2 error.log":
-					detectAttack(allAttacks[4], allMonitoredFiles[2])
+					detectAttack(&allAttacks[4], &allMonitoredFiles[2])
 
 				case "xplico_access.log":
-					detectAttack(allAttacks[5], allMonitoredFiles[3])
+					detectAttack(&allAttacks[5], &allMonitoredFiles[3])
 
 				case "syslog":
-					detectAttack(allAttacks[6], allMonitoredFiles[4])
+					detectAttack(&allAttacks[6], &allMonitoredFiles[4])
 				}
 			}
 		}
