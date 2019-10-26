@@ -6,13 +6,23 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/hpcloud/tail"
+	//"log"
+	//"github.com/fsnotify/fsnotify"
 )
+
+func checkErrors(e error) {
+	if e != nil {
+		panic(e)
+	}
+}
 
 func checkLastModTime(f monitoredFile) time.Time {
 	var t time.Time
-	if fi, err2 := os.Stat(f.path); err2 == nil {
-		t = fi.ModTime()
-	}
+	fi, err2 := os.Stat(f.path)
+	checkErrors(err2)
+	t = fi.ModTime()
 	return t
 }
 
@@ -23,33 +33,29 @@ func watchLog(f monitoredFile) bool {
 	if f.lastMod != t {
 		f.hasBeenModified = true
 		f.lastMod = t
-		p(string(f.name) + " Has been modified!") //DEBUG
+		p(string(f.name)+" Has been modified!", f.lastLog) //DEBUG
+	} else {
+		f.hasBeenModified = false
 	}
 	return f.hasBeenModified
 }
 
-func checkErrors(e error) {
-	if e != nil {
-		panic(e)
-	}
-}
 
 func tailLog(f monitoredFile) {
-
-	logFile, err := os.Open(f.path)
+	var newLog string
+	t, err := tail.TailFile(f.path, tail.Config{Follow: false})
 	checkErrors(err)
-	o2, err := logFile.Seek(600, 0)
-	checkErrors(err)
-	b2 := make([]byte, 200)
-	n2, err := logFile.Read(b2)
-	checkErrors(err)
-	p(n2, "bytes @", o2)
-	p("the last line from ", f.name, " is:") //DEBUG
-	p(string(b2[:n2]))
-	//f.lastLog = logFile
+	for line := range t.Lines { // THE PROBLEM IS HERE
+		newLog = line.Text
+	}
+	f.lastLog = newLog
 }
 
 func detectAttack(a attack, f monitoredFile) {
+	p("detecting attack")
+	p("searching : ", a.control)
+	p("in", f.lastLog)
+
 	if strings.Contains(f.lastLog, a.control) {
 		a.check = true
 		p(a.name, " Detected!") //DEBUG
